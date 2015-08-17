@@ -4,7 +4,7 @@ This bot locks onto AdVenture Capitalist program running and dynamically plays
 the game for you based on the notifications it receives
 
 #TODO: integrate image word processing to keep track of numbers
-
+#TODO: add quit button
 @date:   August 13, 2015
 @author: William Pierce
 
@@ -17,7 +17,7 @@ import time
 import ImageOps
 # import numpy as np    #TODO: Need to fix build environment
 
-#Global Variables
+'''Global Variables'''
 width = 640
 height = 400
 x_pad = 363
@@ -48,8 +48,7 @@ Indicator and Upgrades
 1 Manager
 2 Angel Investor
 '''
-cord_upgrade_indicator = []
-cord_upgrade = []
+cord_upgrade= []
 cord_upgrade_buy = ()
 cord_X = ()
 '''Screen functions'''
@@ -97,14 +96,13 @@ def lockOn():
     global box
     global cord_sale
     global cord_buy
-    global cord_upgrade_indicator
     global cord_upgrade
     global cord_upgrade_buy
     global cord_X
     s = screenGrab()
     x,y = s.size
-    for i in range(x):
-        for j in range(y):
+    for i in xrange(x):
+        for j in xrange(y):
             if s.getpixel((i,j)) == (87, 79, 71):
                 #find width, if this is the box
                 k = i + 1
@@ -129,32 +127,35 @@ def lockOn():
                     x_pad = i
                     y_pad = j
                     supposed_width = int((k - i) * 5.26) #this is ~20% of the screen
-                    print 'supposed_width: %d' % supposed_width
+                    #print 'supposed_width: %d' % supposed_width
                     width = bindWidth(supposed_width) # we bind this to an exact value
                     height = l - j + 1            #this is the height we just found
                     game_found = True
                     box = (x_pad,y_pad,x_pad + width,y_pad + height)
                     #Populate sell and buy coordinates dynamically
-                    for i in range(5):
+                    for i in xrange(5):
                         #first column
                         cord_sale.append((int(width * .29), int(height * (.21 + distance_between_buttons * i))))
                         cord_buy.append((int(width * .39), int(height * (.27 + distance_between_buttons * i) - 2)))
-                    for i in range(5):
+                    for i in xrange(5):
                         #second column 
                         cord_sale.append((int(width * .64), int(height * (.21 + distance_between_buttons * i))))
                         cord_buy.append((int(width * .75), int(height * (.27 + distance_between_buttons * i) - 2)))
                     #Populate upgrade buttons dynamically
                     cord_upgrade_buy = (int(width * .71), int(height * .5))
                     cord_X = (int(width * .93), int(height * .065))
-                    for i in range(3):
-                        cord_upgrade_indicator.append((int(width * .025), int(height * (.44 + .115 * i))))
-                        cord_upgrade.append((int(width * .05), int(height * (.44 + .115 * i))))
+                    for i in xrange(3):
+                        cord_upgrade.append((int(width * .025), int(height * (.44 + .115 * i))))
+                        #cord_upgrade.append((int(width * .05), int(height * (.44 + .115 * i))))
                     return
     print "AdVenture Capitalist! not found on this %d by %d screen." % (x, y)
+    
+#turn off sound
+#def soundToggle():    
 '''Helper functions'''
 def leftClick():
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,0,0)
-    time.sleep(.1)
+    time.sleep(.15)
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,0,0)
     ###print "Click."          #completely optional. But nice for debugging purpo    
 def leftDown():
@@ -165,6 +166,11 @@ def leftUp():
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,0,0)
     time.sleep(.1)
     #print 'left release'
+def pressEsc():
+    win32api.keybd_event('0x1B',0,0,0)
+    time.sleep(.05)
+    win32api.keybd_event('0x1B',0 ,win32con.KEYEVENTF_KEYUP ,0)
+            
 def mousePos(cord):
     win32api.SetCursorPos((x_pad + cord[0], y_pad + cord[1]))     
 def get_cords():
@@ -173,91 +179,144 @@ def get_cords():
     y = y - y_pad
     print x,y
 '''Action functions'''
+def upgrade():
+    print 'mew'
+    
 def buyManager():
+    s = boxGrab()
     mousePos(cord_upgrade[1])
     leftClick()
-    mousePos(cord_upgrade[1]) #buy
+    mousePos(cord_upgrade_buy)
     leftClick()
-    #if point is still orange, click again
-    mousePos(cord_upgrade[1])
-    leftClick()
-'''
-def upGrade()
-def AngelInvestorSacrifice()
-'''
+    #We can still buy more
+    while s.getpixel(cord_upgrade_buy) == (140, 129, 118):
+        leftClick()
+        i = i = 1
+        print "Entering Execution Stage %d" % i
+    #We no longer need to manage
+    i = i + 1
+    print "Entering Execution Stage %d" % i 
+    
+def AngelInvestorSacrifice():
+    print 'mew'
 
 '''Game code'''    
-def startGame():
-    s = boxGrab()
-    #for i in cord_buy: 
+def startGame(): 
     i = 0
-    while True:
-        mousePos(cord_sale)
-        leftClick()
-        #If we can buy, buy
-        if s.getpixel(cord_buy[i]) == (224, 136, 74):
-            mousePos(cord_sale[i])
-            leftClick()   
-        #if we can purchase a new one, do so 
-        if s.getpixel(cord_buy[i + 1]) == indicator:
-            mousePos(cord_sale[i + 1])
+    j = 1
+    counter = 0
+    print "Entering Execution Stage %d" % i
+    #May need adjustment to avoid OOB
+    #TODO: This may encounter an OOB exception, since managers take precedence
+    while i < 9:
+        if win32api.GetAsyncKeyState(ord('q')) == 1:
+            return
+        s = boxGrab()
+        #We can buy a manager
+        if s.getpixel(cord_upgrade[1]) == indicator:
+        #buyManager()
+            mousePos(cord_upgrade[1])
             leftClick()
-        if s.getpixel(cord_upgrade_indicator[1]) == indicator:
-            #we can buy a manager
-            mousePos(cord_upgrade_indicator[1])
-            leftClick()
+            time.sleep(.2)
             mousePos(cord_upgrade_buy)
             leftClick()
+            time.sleep(.5)
+            #We no longer need to manage i
+            i = i + 1
+            print "Entering Execution Stage %d" % i
+            #We can still buy more
+            while s.getpixel(cord_upgrade_buy) == (139, 184, 207):
+                leftClick()
+                i = i + 1
+                time.sleep(.2)
+                print "Entering Execution Stage %d" % i
+            pressEsc()
+            time.sleep(.2)
             
-            
-            
+        #if we can purchase a new business, do so 
+        if s.getpixel(cord_buy[j]) == indicator:
+            mousePos(cord_buy[j])
+            time.sleep(.2)
+            leftClick()
+            time.sleep(.2)
+            leftClick()
+            j = j + 1
+        #We can buy an upgrade
+        #if s.getpixel(cord_upgrade[0]) == indicator:
+        #    upgrade()     
+        time.sleep(.2)
+        for k in xrange(i, j):
+            #We click and buy all unmanaged
+            mousePos(cord_sale[k])
+            time.sleep(.2)
+            leftClick()
+            time.sleep(.2)
+            if counter == 3:
+                #If we can buy, buy
+                #print s.getpixel(cord_buy[i])
+                if s.getpixel(cord_buy[k]) == (224, 136, 74):
+                    mousePos(cord_buy[k])
+                    leftClick()   
         
-        #image Process next location
-        print "Entering Execution Stage 2"
-    #once Broken, we continue onto the long-game strategy
+        if counter == 3:
+            counter = 0
+        time.sleep(.1)
+        counter = counter + 1
+        
+        # Angel Investors not handled here
 
+    
+    #Once broken, all businesses are bought and we enter the long-term game strategy    
+    
 
 def continueGame():
     while True:
         s = boxGrab()
-        if s.getpixel(cord_upgrade_indicator[1]) == (220, 123, 24):
+        if s.getpixel(cord_upgrade[1]) == (220, 123, 24):
             buyManager()
         mousePos(cord_buy[1])
         leftClick()
 
-def main():
-    #time.sleep(5)
-    lockOn();
+def diagnostics():
     print "x_pad: %d\ny_pad: %d\nwidth: %d\nheight: %d" % (x_pad, y_pad, width, height)
     print box
-    if game_found == False:
-        print "Bot not Started"
-        return
-    #Check if game is already initialized, past introduction
     s = boxGrab()
-    #for i in range(3):
+    #for i in xrange(3):
     print s.getpixel(cord_upgrade[1])
     mousePos(cord_upgrade[1])
     time.sleep(2)
     leftClick()
+    leftClick()
     mousePos(cord_upgrade_buy)
+    time.sleep(5)
+    print 'mew'
     print s.getpixel(cord_upgrade_buy)
         
-        #leftClick()
-    try:
-        #startGame()
-        #continueGame()
-        print "meow"
-    except:
-        "Game interrupted"
+    #leftClick()
         
     '''
     print 'meow'
     s = screenGrab()
-    for i in range(3):
+    for i in xrange(3):
         print s.getpixel(cord_upgrade_indicator[i])
     '''
-        
+    
+    
+def main():
+    #time.sleep(5)
+    lockOn()
+    #diagnostics()
+    #s = boxGrab()
+    if game_found == False:
+        print "Bot not Started"
+        return
+    #print s.getpixel(cord_buy[2])
+    try:
+        startGame()
+        #continueGame()
+        print "meow"
+    except:
+        "Game interrupted"
         
 if __name__ == '__main__':
     main()
