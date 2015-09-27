@@ -15,7 +15,7 @@ import win32con
 import ImageGrab
 import time
 import ImageOps
-# import numpy as np    #TODO: Need to fix build environment
+import numpy as np    #TODO: Need to fix build environment
 
 '''Global Variables'''
 width = 640
@@ -47,11 +47,12 @@ Indicator and Upgrades
 0 Upgrade
 1 Manager
 2 Angel Investor
-'''
 cord_upgrade= []
-cord_upgrade_buy = ()
+cord_upgrade_buy = []
 cord_X = ()
-'''Screen functions'''
+'''
+Screen functions
+'''
 def screenGrab():
     im = ImageGrab.grab()
     #to save as file
@@ -142,7 +143,8 @@ def lockOn():
                         cord_sale.append((int(width * .64), int(height * (.21 + distance_between_buttons * i))))
                         cord_buy.append((int(width * .75), int(height * (.27 + distance_between_buttons * i) - 2)))
                     #Populate upgrade buttons dynamically
-                    cord_upgrade_buy = (int(width * .71), int(height * .5))
+                    cord_upgrade_buy.append((int(width * .71), int(height * .65)))
+                    cord_upgrade_buy.append((int(width * .71), int(height * .5)))
                     cord_X = (int(width * .93), int(height * .065))
                     for i in xrange(3):
                         cord_upgrade.append((int(width * .025), int(height * (.44 + .115 * i))))
@@ -203,69 +205,92 @@ def AngelInvestorSacrifice():
 '''Game code'''    
 def startGame(): 
     i = 0
-    j = 1
+    j = 1 
     counter = 0
     print "Entering Execution Stage %d" % i
     #May need adjustment to avoid OOB
     #TODO: This may encounter an OOB exception, since managers take precedence
     while i < 9:
-        if win32api.GetAsyncKeyState(ord('q')) == 1:
-            return
+        #TODO: Add quit button
         s = boxGrab()
         #We can buy a manager
         if s.getpixel(cord_upgrade[1]) == indicator:
-        #buyManager()
             mousePos(cord_upgrade[1])
             leftClick()
             time.sleep(.2)
-            mousePos(cord_upgrade_buy)
+            mousePos(cord_upgrade_buy[1])
             leftClick()
             time.sleep(.5)
             #We no longer need to manage i
             i = i + 1
             print "Entering Execution Stage %d" % i
-            #We can still buy more
-            while s.getpixel(cord_upgrade_buy) == (139, 184, 207):
+            '''
+            s = boxGrab()
+            testLocation = cord_upgrade_buy[1] - (0, 2)    #to avoid catching the mouse
+            while s.getpixel(testLocation) == (139, 184, 207):
+                #We can still buy more
+                s = boxGrab()
                 leftClick()
                 i = i + 1
                 time.sleep(.2)
                 print "Entering Execution Stage %d" % i
-            pressEsc()
+            '''
+            time.sleep(.2)
+            mousePos(cord_X)
+            leftClick()
             time.sleep(.2)
             
         #if we can purchase a new business, do so 
-        if s.getpixel(cord_buy[j]) == indicator:
+        if (219, 122, 54) <= s.getpixel(cord_buy[j]) <= indicator:
             mousePos(cord_buy[j])
             time.sleep(.2)
             leftClick()
             time.sleep(.2)
             leftClick()
             j = j + 1
-        #We can buy an upgrade
-        #if s.getpixel(cord_upgrade[0]) == indicator:
-        #    upgrade()     
+            
+        if s.getpixel(cord_upgrade[0]) == indicator:
+            #purchase upgrade
+            mousePos(cord_upgrade[0])
+            leftClick()
+            time.sleep(.2)
+            mousePos(cord_upgrade_buy[0])
+            leftClick()
+            time.sleep(.5)
+            '''
+            s = boxGrab()
+            testLocation = cord_upgrade_buy[0] - (0, 2)    #to avoid catching the mouse
+            while s.getpixel(testLocation) == (220, 123, 54):
+                #We can still upgrade more
+                s = boxGrab()
+                leftClick()
+                time.sleep(.2)
+            '''
+            time.sleep(.2)
+            mousePos(cord_X)
+            leftClick()
+            time.sleep(.2)
         time.sleep(.2)
         for k in xrange(i, j):
-            #We click and buy all unmanaged
+            #We click all unmanaged and buy
             mousePos(cord_sale[k])
             time.sleep(.2)
             leftClick()
             time.sleep(.2)
-            if counter == 3:
-                #If we can buy, buy
-                #print s.getpixel(cord_buy[i])
-                if s.getpixel(cord_buy[k]) == (224, 136, 74):
-                    mousePos(cord_buy[k])
-                    leftClick()   
         
-        if counter == 3:
+        if counter == 2:
             counter = 0
+            for k in xrange(0, j):
+                #If we can buy, buy, in reverse order
+                #print s.getpixel(cord_buy[i])
+                s = boxGrab()
+                if s.getpixel(cord_buy[j - k - 1]) == (224, 136, 74):
+                    mousePos(cord_buy[j - k - 1])
+                    leftClick()   
+                    time.sleep(.2)
         time.sleep(.1)
         counter = counter + 1
-        
         # Angel Investors not handled here
-
-    
     #Once broken, all businesses are bought and we enter the long-term game strategy    
     
 
@@ -278,12 +303,11 @@ def continueGame():
         leftClick()
 
 def diagnostics():
-    print "x_pad: %d\ny_pad: %d\nwidth: %d\nheight: %d" % (x_pad, y_pad, width, height)
-    print box
+    #print "x_pad: %d\ny_pad: %d\nwidth: %d\nheight: %d" % (x_pad, y_pad, width, height)
+    #print box
     s = boxGrab()
-    #for i in xrange(3):
-    print s.getpixel(cord_upgrade[1])
-    mousePos(cord_upgrade[1])
+    print s.getpixel(cord_upgrade[0])
+    mousePos(cord_upgrade[0])
     time.sleep(2)
     leftClick()
     leftClick()
@@ -291,7 +315,8 @@ def diagnostics():
     time.sleep(5)
     print 'mew'
     print s.getpixel(cord_upgrade_buy)
-        
+    #if win32api.GetAsyncKeyState(ord('q')) == 1:
+    #        return
     #leftClick()
         
     '''
@@ -300,19 +325,16 @@ def diagnostics():
     for i in xrange(3):
         print s.getpixel(cord_upgrade_indicator[i])
     '''
-    
+'''
     
 def main():
-    #time.sleep(5)
     lockOn()
     #diagnostics()
-    #s = boxGrab()
     if game_found == False:
         print "Bot not Started"
         return
-    #print s.getpixel(cord_buy[2])
     try:
-        startGame()
+        #startGame()
         #continueGame()
         print "meow"
     except:
